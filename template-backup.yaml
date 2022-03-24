@@ -1,0 +1,138 @@
+Parameters:
+  BucketName:
+    Type: String
+    Default: b2-photos-zero-cf
+  PrivateSubnet:
+    Description: Choose which subnets the Lambda-functions should be deployed to
+    Type: AWS::EC2::Subnet::Id
+    Default: subnet-08034b18ca6b04788
+  SecurityGroup:
+    Description: Select the Security Group to use for the Lambda-functions
+    Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-09d3b32ac839df60b
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  This Lambda function does something
+Resources:
+  IndexLambdaRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ''
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: AmazonS3FullAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:*'
+                  - 's3-object-lambda:*'
+                Resource:
+                  - '*'
+        - PolicyName: AmazonRekognitionFullAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'rekognition:*'
+                Resource:
+                  - '*'
+        - PolicyName: EC2FullAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ec2:*'
+                Resource:
+                  - '*'
+        - PolicyName: LogFullAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:*'
+                Resource:
+                  - '*'
+        - PolicyName: AmazonOpenSearchServiceFullAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'es:*'
+                Resource:
+                  - '*'
+      Path: /
+  IndexLambda:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: 'index-photos.lambda_handler'
+      MemorySize: '256'
+      Description: It is a Lambda function
+      FunctionName: 'index-photos-3'
+      Role: !GetAtt 
+        - IndexLambdaRole
+        - Arn
+      Runtime: python3.9
+      Timeout: '60'
+      Code: ./index-photos.py
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref PrivateSubnet
+    DependsOn:
+      - IndexLambdaRole
+  
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt IndexLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:aws:s3:::${BucketName}
+
+  StorageBucket:
+    Type: AWS::S3::Bucket
+    DependsOn: LambdaInvokePermission
+    Properties:
+      AccessControl: PublicReadWrite
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      BucketName: !Ref BucketName
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt [ IndexLambda, Arn]
+
+  SampleBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref BucketName
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:GetObject'
+            Effect: Allow
+            Resource: !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref BucketName
+                - /*
+            Principal: '*'
