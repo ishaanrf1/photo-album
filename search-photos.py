@@ -13,9 +13,9 @@ def singular(word):
         return word
 
 def fetch_from_opensearch(keyword):
-    url = "https://vpc-photos-zvgzdxzcebvr2rrlzjki5wwchm.us-east-1.es.amazonaws.com/photos/_search?q="+keyword
+    url = "https://search-photo-album-es-cf1-pwyqbd2senqneb7wgmpqjarruy.us-east-1.es.amazonaws.com/photos/_search?q="+keyword
     ##changed
-    awsauth = 'user:Pa$$word2020'
+    awsauth = 'username1:Password2022!'
     http = urllib3.PoolManager()
     headers = urllib3.make_headers(basic_auth=awsauth)
     r = http.request('GET', url, headers=headers)
@@ -41,7 +41,7 @@ def search_photos(one, two, three):
     return output
    
 def generate_response(images):
-    bucket_url = 'https://b2-photos-zero-cf.s3.us-east-1.amazonaws.com/'
+    bucket_url = 'http://photo-store-cf.s3.us-east-1.amazonaws.com/'
     results = []
     for img in images:
         name, labels = img
@@ -55,12 +55,18 @@ def generate_response(images):
 
 def lambda_handler(event, context):
     client = boto3.client('lex-runtime', region_name='us-east-1')
+    
     response_lex = client.post_text(
     botName='photo_bot',
     botAlias="bot",
-    userId="rand_str",
-    inputText = event["search_query"])
+    userId="random_str",
+    inputText = event["search_query"]
+    )
+    
+    print(response_lex)
+    
     dialog_state = response_lex["dialogState"]
+    print(dialog_state)
     if dialog_state == 'ReadyForFulfillment' and 'slots' in response_lex:
         pass
     else:
