@@ -32,12 +32,12 @@ def lambda_handler(event, context):
    
     format = {'objectKey':key_name,'bucket':bucket_name,'createdTimestamp':timestamp,'labels':labels}
 
-    url = "https://vpc-photos-zvgzdxzcebvr2rrlzjki5wwchm.us-east-1.es.amazonaws.com/photos/0"
+    url = "https://search-photo-album-es-cf1-pwyqbd2senqneb7wgmpqjarruy.us-east-1.es.amazonaws.com/photos/0"
     headers = {"Content-Type": "application/json"}
-    awsauth = ('user', 'Pa$$word2020')
+    awsauth = ('username1', 'Password2022!')
 
     http = urllib3.PoolManager()
-    headers = urllib3.make_headers(basic_auth='user:Pa$$word2020')
+    headers = urllib3.make_headers(basic_auth='username1:Password2022!')
     headers['Content-Type'] = 'application/json'
 
     r = http.request('POST', url,
