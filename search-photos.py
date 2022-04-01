@@ -14,6 +14,7 @@ def singular(word):
 
 def fetch_from_opensearch(keyword):
     url = "https://vpc-photos-zvgzdxzcebvr2rrlzjki5wwchm.us-east-1.es.amazonaws.com/photos/_search?q="+keyword
+    ##changed
     awsauth = 'user:Pa$$word2020'
     http = urllib3.PoolManager()
     headers = urllib3.make_headers(basic_auth=awsauth)
