@@ -4,6 +4,7 @@ import urllib3
 import time
 
 def lambda_handler(event, context):
+    ## changed
     REGION = 'us-east-1'
     s3_info = event['Records'][0]['s3']
     bucket_name = s3_info['bucket']['name']
